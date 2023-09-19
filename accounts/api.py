@@ -20,9 +20,9 @@ response = Response
 async def sign_up(request, data: SignupSchema):
     data = data.dict()
 
-    username = data.get("username")
-    email = data.get("email")
-    full_name = data.get("full_name")
+    username = data.get("username").lower()
+    email = data.get("email").lower()
+    full_name = data.get("full_name").title()
     password = data.get("password")
 
     if await User.objects.filter(username=username).aexists():
@@ -47,14 +47,14 @@ async def sign_up(request, data: SignupSchema):
 
 @router.get("check-username/", auth=None, response={200: ResponseWithData})
 async def check_username(request, username: str):
-    check = await User.objects.filter(username=username).aexists()
+    check = await User.objects.filter(username=username.lower()).aexists()
     message = "Username is available" if not check else "Username is not available"
     return response.response_with_data(message=message)
 
 
 @router.get("check-email/", auth=None, response={200: ResponseWithData})
 async def check_email(request, email: str):
-    check = await User.objects.filter(email=email).aexists()
+    check = await User.objects.filter(email=email.lower()).aexists()
     message = "Email is available" if not check else "Email is not available"
     return response.response_with_data(message=message)
 
@@ -63,7 +63,7 @@ async def check_email(request, email: str):
 async def sign_in(request, data: SignInSchema):
     data = data.dict()
 
-    email = data.get("email")
+    email = data.get("email").lower()
     password = data.get("password")
 
     user = await User.objects.filter(email=email).afirst()
@@ -78,23 +78,23 @@ async def sign_in(request, data: SignInSchema):
     return response.response_with_data(data=data, status_code=201)
 
 
-@router.post("recover-email/", auth=None, response={201: ResponseWithData, 400: ResponseWithError})
+@router.post("recover-account/", auth=None, response={201: ResponseWithData, 400: ResponseWithError})
 async def send_recovery_mail(request, data: RecoveryMailSchema):
     data = data.dict()
-    email = data.get("email")
+    email = data.get("email").lower()
     user = await User.objects.filter(email=email).afirst()
     if not user:
         return response.response_with_error(errors="User does not exist")
 
-    send_recovery_mail_with_otp(user_id=user.id, email=email, full_name=user.full_name)
+    await send_recovery_mail_with_otp(user_id=user.id, email=email, full_name=user.full_name)
 
     return response.response_with_data()
 
 
-@router.post("validate-recovery-otp", auth=None, response={204: ResponseWithData, 400: ResponseWithError})
+@router.post("validate-recovery-otp/", auth=None, response={204: ResponseWithData, 400: ResponseWithError})
 async def validate_recovery_otp(request, data: ValidateRecoveryOTPSchema):
     data = data.dict()
-    email = data.get("email")
+    email = data.get("email").lower()
     otp = data.get("otp")
     user = await User.objects.only("id", "email", "full_name").filter(email=email).afirst()
     if not user:
@@ -106,19 +106,19 @@ async def validate_recovery_otp(request, data: ValidateRecoveryOTPSchema):
         return response.response_with_error(errors="Invalid OTP")
 
     if otp_obj.expires > now():
-        send_recovery_mail_with_otp(user_id=user.id, email=user.email, full_name=user.full_name)
-        return response.response_with_data(message="THis otp has expired, a new OTP has been sent to your email")
+        await send_recovery_mail_with_otp(user_id=user.id, email=user.email, full_name=user.full_name)
+        return response.response_with_error(errors="This otp has expired, a new OTP has been sent to your email")
 
     otp_obj.delete()
     return response.response_with_data(status_code=204)
 
 
-@router.post("change-password/", auth=None, response={204: ResponseWithData, 400: ResponseWithError})
+@router.post("change-password-recovery/", auth=None, response={204: ResponseWithData, 400: ResponseWithError})
 async def recovery_change_password(request, data: RecoveryChangePasswordSchema):
     data = data.dict()
 
-    email = data.get("email")
-    password = data.get("password")
+    email = data.get("email").lower()
+    password = data.get("new_password")
     confirm_password = data.get("confirm_password")
 
     if password != confirm_password:
@@ -129,4 +129,6 @@ async def recovery_change_password(request, data: RecoveryChangePasswordSchema):
         return response.response_with_error(errors="Invalid email")
 
     user.password = make_password(password)
-    user.save(update_fields=["password"])
+    await user.asave(update_fields=["password"])
+
+    return response.response_with_data()

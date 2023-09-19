@@ -4,6 +4,7 @@ from re import search
 from string import digits
 from typing import Any
 
+from asgiref.sync import sync_to_async
 from django.conf import settings
 from django.core.mail import EmailMessage
 from django.http import HttpRequest
@@ -50,6 +51,7 @@ def generate_digits(length: int = 6) -> str:
     return "".join(sample(digits, length))
 
 
+@sync_to_async()
 def generate_unique_otp() -> str:
     otp = generate_digits(6)
 
@@ -58,10 +60,10 @@ def generate_unique_otp() -> str:
     return otp
 
 
-def send_recovery_mail_with_otp(user_id: int, email: str, full_name: str):
-    otp = generate_unique_otp()
-    AccountRecoveryOTP.objects.filter(user_id=user_id).delete()
-    AccountRecoveryOTP.objects.create(user_id=user_id, otp=otp, expires=now() + timedelta(5))
+async def send_recovery_mail_with_otp(user_id: int, email: str, full_name: str):
+    otp = await generate_unique_otp()
+    await AccountRecoveryOTP.objects.filter(user_id=user_id).adelete()
+    await AccountRecoveryOTP.objects.acreate(user_id=user_id, otp=otp, expires=now() + timedelta(5))
     context = dict(name=full_name, otp=otp)
     template_name = "otp_email_template.html"
     receiver = (email,)
@@ -70,4 +72,3 @@ def send_recovery_mail_with_otp(user_id: int, email: str, full_name: str):
                        from_email=settings.EMAIL_HOST_USER, to=receiver)
     msg.content_subtype = "html"
     msg.send()
-
