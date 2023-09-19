@@ -5,9 +5,9 @@ from ninja.errors import ValidationError
 from accounts.api import router as accounts_router
 from utility.authorization import ActiveUserAuth
 from utility.exception import InvalidTokenError
-from utility.helper_functions import ORJSONParser, parse_pydantic_errors
+from utility.helper_functions import ORJSONParser, parse_pydantic_errors, ORJSONRenderer
 
-api = NinjaAPI(auth=ActiveUserAuth(), parser=ORJSONParser())
+api = NinjaAPI(auth=ActiveUserAuth(), parser=ORJSONParser(), renderer=ORJSONRenderer())
 
 api.add_router("auth/", accounts_router)
 

@@ -12,3 +12,9 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.username
+
+
+class AccountRecoveryOTP(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    otp = models.CharField(max_length=7)
+    expires = models.DateTimeField()

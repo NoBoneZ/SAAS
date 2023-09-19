@@ -1,5 +1,6 @@
 from typing import Optional, Any, Union
 
+from django.http import JsonResponse
 from ninja import Schema
 
 
@@ -15,12 +16,10 @@ class ResponseWithError(Schema):
 
 class Response:
 
-
     @staticmethod
     def response_with_data(status_code: int = 200, message: str = "Operation Successful", data: dict | list = {}):
-        return dict(status_code=status_code, data=data, message=message)
-
+        return JsonResponse(dict(data=data, message=message), status=status_code)
 
     @staticmethod
     def response_with_error(status_code: int = 400, message: str = "Operation Failed", errors: str = ""):
-        return dict(status_code=status_code, message=message, errors=errors)
+        return JsonResponse(dict(message=message, errors=errors), status=status_code)
