@@ -1,3 +1,5 @@
+from asgiref.sync import sync_to_async
+
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.hashers import make_password
@@ -70,7 +72,7 @@ async def sign_in(request, data: SignInSchema):
     if not user:
         return response.response_with_error(errors="User does not exist")
 
-    if not authenticate(request, username=user.username, password=password):
+    if not await sync_to_async(authenticate)(request, username=user.username, password=password):
         return response.response_with_error(errors="Invalid username or password")
 
     refresh_token = RefreshToken.for_user(user)
