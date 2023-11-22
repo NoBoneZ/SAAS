@@ -63,7 +63,7 @@ def generate_unique_otp() -> str:
 async def send_recovery_mail_with_otp(user_id: int, email: str, full_name: str):
     otp = await generate_unique_otp()
     await AccountRecoveryOTP.objects.filter(user_id=user_id).adelete()
-    await AccountRecoveryOTP.objects.acreate(user_id=user_id, otp=otp, expires=now() + timedelta(5))
+    await AccountRecoveryOTP.objects.acreate(user_id=user_id, otp=otp, expires=now() + timedelta(minutes=5))
     context = dict(name=full_name, otp=otp)
     template_name = "otp_email_template.html"
     receiver = (email,)
