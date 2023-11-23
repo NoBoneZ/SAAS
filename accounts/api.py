@@ -107,7 +107,7 @@ async def validate_recovery_otp(request, data: ValidateRecoveryOTPSchema):
     if not otp_obj:
         return response.response_with_error(errors="Invalid OTP")
 
-    if otp_obj.expires > now():
+    if otp_obj.expires < now():
         await send_recovery_mail_with_otp(user_id=user.id, email=user.email, full_name=user.full_name)
         return response.response_with_error(errors="This otp has expired, a new OTP has been sent to your email")
 
