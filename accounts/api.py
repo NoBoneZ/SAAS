@@ -134,3 +134,4 @@ async def recovery_change_password(request, data: RecoveryChangePasswordSchema):
     await user.asave(update_fields=["password"])
 
     return response.response_with_data()
+
