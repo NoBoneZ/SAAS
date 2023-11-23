@@ -178,6 +178,7 @@ EMAIL_PORT = config("EMAIL_PORT", cast=int)
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    "https://agrovesto-test.vercel.app/",
 ]
 
 CORS_ALLOW_HEADERS = (
